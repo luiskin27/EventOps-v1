@@ -1,0 +1,32 @@
+# Секреты
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Django
+backend/media/
+backend/staticfiles/
+db.sqlite3
+
+# Node (для будущего React)
+node_modules/
+frontend/dist/
+frontend/build/
+
+# Файлы для тестов с паролями
+login.json
+guest.json
+participants.csv
+
+# Система и редакторы
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
