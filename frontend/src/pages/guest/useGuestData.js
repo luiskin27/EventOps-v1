@@ -10,9 +10,9 @@ export function useGuestData() {
   const event = useItem("events", eventId);
   const schedule = useList("schedule", { event: eventId });
   const items = useList("payment-items", { event: eventId });
-  const payments = useList("payments");
+  const payments = useList("payments", {}, { refetchInterval: 15_000 });
   const documents = useList("documents", { event: eventId });
-  const badge = useQuery({ queryKey: ["my-badge"], queryFn: () => api("my/badge/"), retry: false });
+  const badge = useQuery({ queryKey: ["my-badge"], queryFn: () => api("my/badge/"), retry: false, refetchInterval: 15_000 });
 
   // Статус по каждой статье оплаты: approved / pending / rejected / none
   const itemState = (item) => {

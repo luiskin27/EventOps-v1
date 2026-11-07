@@ -10,8 +10,9 @@ import "./styles/index.css";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
-      refetchOnWindowFocus: false,
+      staleTime: 10_000,
+      // вернулись на вкладку — данные сразу обновляются
+      refetchOnWindowFocus: true,
       retry: (count, error) => error?.status >= 500 && count < 2,
     },
   },

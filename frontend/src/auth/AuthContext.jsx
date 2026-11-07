@@ -31,9 +31,20 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     loadMe().finally(() => setReady(true));
     const onLogout = () => setUser(null);
+    // Вход/выход в другой вкладке этого же браузера меняет общий токен —
+    // подхватываем нового пользователя, чтобы вкладка не показывала чужие данные
+    const onStorage = (e) => {
+      if (e.key !== "eventops_access") return;
+      queryClient.clear();
+      loadMe();
+    };
     window.addEventListener("eventops:logout", onLogout);
-    return () => window.removeEventListener("eventops:logout", onLogout);
-  }, [loadMe]);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("eventops:logout", onLogout);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [loadMe, queryClient]);
 
   const loginStaff = async (username, password) => {
     const data = await api("token/", { method: "POST", body: { username, password }, auth: false });

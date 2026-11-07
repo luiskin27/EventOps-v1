@@ -106,7 +106,7 @@ function ReviewPanel({ payment, onDecided }) {
 
 export default function PaymentsPage() {
   const { event } = useOutletContext();
-  const all = useList("payments", { item__event: event.id });
+  const all = useList("payments", { item__event: event.id }, { refetchInterval: 15_000 });
   const [status, setStatus] = useState("PENDING");
   const [q, setQ] = useState("");
   const [selId, setSelId] = useState(null);

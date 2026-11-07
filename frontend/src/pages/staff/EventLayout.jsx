@@ -12,7 +12,7 @@ export default function EventLayout() {
   const events = useList("events");
   const tasks = useList("tasks", { event: eventId });
   const participants = useList("participants", { event: eventId });
-  const pending = useList("payments", { item__event: eventId, status: "PENDING" });
+  const pending = useList("payments", { item__event: eventId, status: "PENDING" }, { refetchInterval: 15_000 });
 
   const today = todayISO();
   const overdue = (tasks.data || []).filter((t) => t.status !== "DONE" && t.due_date && t.due_date < today).length;

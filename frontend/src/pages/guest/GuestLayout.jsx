@@ -7,7 +7,7 @@ import AppShell from "../../layout/AppShell";
 export default function GuestLayout() {
   const { user } = useAuth();
   const items = useList("payment-items", { event: user.participant.event });
-  const payments = useList("payments");
+  const payments = useList("payments", {}, { refetchInterval: 15_000 });
 
   // «Требует действия»: статьи без оплаты или с отклонённым чеком
   const todo = (items.data || []).filter((it) => {
