@@ -1,14 +1,21 @@
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
-      - media_data:/app/media
     ports:
       - "8000:8000"
     env_file:
       - .env
 
-volumes:
-  media_data:
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend

@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "apps.schedule",
     "apps.documents",
     "apps.badges",
+    
 ]
 
 MIDDLEWARE = [
@@ -92,6 +93,9 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
 }
 
-CORS_ALLOWED_ORIGINS = [os.getenv("FRONTEND_URL", "http://localhost:5173")]
+CORS_ALLOWED_ORIGINS = [
+    os.getenv("FRONTEND_URL", "http://localhost:5173"),
+    "http://127.0.0.1:5173",
+]
 
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://localhost:5173")
