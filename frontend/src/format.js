@@ -46,3 +46,27 @@ export function groupByDay(items) {
   }
   return [...groups.values()];
 }
+
+// 1 участник, 2 участника, 5 участников
+export function plural(n, one, few, many) {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  const word = m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+  return `${n} ${word}`;
+}
+
+const shortDayFmt = new Intl.DateTimeFormat("ru-RU", { weekday: "short", day: "numeric", month: "short" });
+export const fmtShortDay = (value) => shortDayFmt.format(new Date(value)).replace(".", "");
+
+// Сколько дней до даты (YYYY-MM-DD), отрицательное — прошло
+export function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((new Date(`${dateStr}T00:00:00`) - today) / 86_400_000);
+}
+
+export const todayISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};

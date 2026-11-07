@@ -3,7 +3,8 @@
 B2B SaaS PWA для мероприятий: лагеря, свадьбы, корпоративные тренинги.
 
 - **Backend:** Django 5 + DRF + SimpleJWT, база Supabase PostgreSQL (без `DB_HOST` будет SQLite)
-- **Frontend:** React 18 + Vite, react-router, TanStack Query, PWA (vite-plugin-pwa)
+- **Frontend:** React 18 + Vite, Tailwind CSS 3, react-router, TanStack Query, lucide-react, PWA (vite-plugin-pwa)
+- **Дизайн:** макеты EventOps (Tailwind, Inter, indigo-600, светлая и тёмная темы) — фронт повторяет их классы один в один
 
 ## Запуск
 
@@ -22,7 +23,7 @@ docker compose exec backend python manage.py seed_demo
 | Кто | Как войти |
 | --- | --- |
 | Организатор | «Я организатор» → `staff1` / `staff12345` |
-| Гость | «Я гость» → телефон `+996 700 111 222`, код `ALA001` |
+| Участник | «Я участник» → телефон `+996 700 111 222`, код `ALA001` |
 
 ## Как устроен вход
 
@@ -52,15 +53,23 @@ docker compose exec backend python manage.py seed_demo
 
 ```
 frontend/src/
-  api/client.js        fetch + JWT + refresh
-  api/hooks.js         useList / useItem / useCrud (react-query)
-  auth/AuthContext.jsx вход сотрудника и гостя, /api/me/
-  pages/LoginPage.jsx
-  pages/VerifyPage.jsx публичная страница из QR (/verify/:token)
-  pages/staff/         события, участники, расписание, задачи, оплаты
-  pages/guest/         программа, бейдж, оплата (мобильный вид)
-  styles/              tokens.css (палитра) + app.css
+  api/client.js          fetch + JWT + refresh
+  api/hooks.js           useList / useItem / useCrud (react-query)
+  auth/AuthContext.jsx   вход участника и организатора, /api/me/
+  theme.jsx              светлая / тёмная тема (класс dark на <html>)
+  layout/AppShell.jsx    Sidebar + Topbar + выдвижное меню на телефоне
+  ui/                    кнопки, бейджи статусов, модалки, BadgeCard
+  pages/LoginPage.jsx    вход (по макету «Регистрация»)
+  pages/VerifyPage.jsx   проверка по QR (/verify/:token): допущен / не допущен
+  pages/staff/           мероприятия, обзор, задачи, расписание, участники,
+                         проверка оплат, бейджи, настройки
+  pages/guest/           кабинет, расписание, оплата (загрузка чека), бейдж
 ```
+
+## Что есть в макетах, но пока нет в API
+
+- Регистрация участника с паролем (сейчас организатор добавляет участника, тот входит по телефону и коду)
+- Документы участника на проверку (удостоверение, справки), роль «Заказчик», отчёты и бюджет, сегменты расписания, метки и исполнители задач, списки/рассылки
 
 ## Что дальше
 

@@ -1,41 +1,40 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { CalendarDays, IdCard, LogOut, Wallet } from "lucide-react";
+import { Outlet } from "react-router-dom";
+import { BadgeCheck, CalendarDays, Home, Upload } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
+import { useList } from "../../api/hooks";
+import AppShell from "../../layout/AppShell";
 
 export default function GuestLayout() {
-  const { user, logout } = useAuth();
-  const p = user.participant;
+  const { user } = useAuth();
+  const items = useList("payment-items", { event: user.participant.event });
+  const payments = useList("payments");
+
+  // «Требует действия»: статьи без оплаты или с отклонённым чеком
+  const todo = (items.data || []).filter((it) => {
+    const mine = (payments.data || []).filter((p) => p.item === it.id);
+    return !mine.some((p) => p.status !== "REJECTED");
+  }).length;
 
   return (
-    <div className="guest">
-      <header className="guest-head">
-        <div>
-          <p className="guest-hello">{p.full_name}</p>
-          <h1 className="guest-event">{p.event_title}</h1>
-        </div>
-        <button type="button" className="icon-btn" onClick={logout} aria-label="Выйти" title="Выйти">
-          <LogOut size={18} />
-        </button>
-      </header>
-
-      <main className="guest-main">
-        <Outlet />
-      </main>
-
-      <nav className="bottom-nav">
-        <NavLink to="/guest" end>
-          <CalendarDays size={22} />
-          Программа
-        </NavLink>
-        <NavLink to="/guest/badge">
-          <IdCard size={22} />
-          Бейдж
-        </NavLink>
-        <NavLink to="/guest/payments">
-          <Wallet size={22} />
-          Оплата
-        </NavLink>
-      </nav>
-    </div>
+    <AppShell
+      nav={{
+        section: "Участник",
+        items: [
+          { to: "/guest", end: true, label: "Кабинет", icon: Home },
+          { to: "/guest/schedule", label: "Моё расписание", icon: CalendarDays },
+          { to: "/guest/payments", label: "Оплата", icon: Upload, count: todo, countKind: "alert", countLabel: "Требует действия:" },
+          { to: "/guest/badge", label: "Мой бейдж", icon: BadgeCheck },
+        ],
+        eventCard: (
+          <>
+            <p className="text-xs muted">Мероприятие</p>
+            <p className="mt-0.5 text-sm font-semibold">{user.participant.event_title}</p>
+          </>
+        ),
+      }}
+      topbar={{ eventTitle: user.participant.event_title }}
+    >
+      <Outlet />
+    </AppShell>
   );
 }
