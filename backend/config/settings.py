@@ -5,7 +5,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret")
-DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
+DEBUG = os.getenv("DJANGO_DEBUG", "0").lower() in ("1", "true", "yes")
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
 
 INSTALLED_APPS = [
@@ -54,23 +54,33 @@ TEMPLATES = [{
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "postgres"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT", "5432"),
-        "OPTIONS": {"sslmode": "require"},
+if os.getenv("DB_HOST"):
+    # Supabase PostgreSQL (основной вариант)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "postgres"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+            "OPTIONS": {"sslmode": os.getenv("DB_SSLMODE", "require")},
+        }
     }
-}
+else:
+    # Локальная разработка без интернета: если DB_HOST не задан — SQLite
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_USER_MODEL = "auth.User"
 
 LANGUAGE_CODE = "ru"
 LANGUAGES = [("ru", "Русский"), ("en", "English"), ("ky", "Кыргызча")]
-TIME_ZONE = "UTC"
+TIME_ZONE = os.getenv("DJANGO_TIME_ZONE", "Asia/Bishkek")
 USE_I18N = True
 USE_TZ = True
 

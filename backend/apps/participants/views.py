@@ -24,7 +24,7 @@ class RoleViewSet(viewsets.ModelViewSet):
 
 
 class ParticipantViewSet(viewsets.ModelViewSet):
-    queryset = Participant.objects.all()
+    queryset = Participant.objects.select_related("role", "badge")
     filterset_fields = ["event"]
     permission_classes = [StaffOrReadOnlyGuest]
 

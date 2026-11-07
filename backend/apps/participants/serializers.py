@@ -12,6 +12,13 @@ class RoleSerializer(serializers.ModelSerializer):
 class ParticipantSerializer(serializers.ModelSerializer):
     """Полный вид, только для организаторов."""
 
+    role_name = serializers.CharField(source="role.name", read_only=True, default=None)
+    badge_token = serializers.SerializerMethodField()
+
+    def get_badge_token(self, obj):
+        badge = getattr(obj, "badge", None)
+        return str(badge.verification_token) if badge else None
+
     class Meta:
         model = Participant
         fields = "__all__"

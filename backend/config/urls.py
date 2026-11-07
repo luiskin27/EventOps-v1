@@ -1,9 +1,12 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from apps.badges.public import BadgeQRView, MyBadgeView, PublicBadgeVerifyView
 from apps.participants.exports import ParticipantsCSVExportView
+from apps.participants.me import MeView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -24,4 +27,9 @@ urlpatterns = [
     path("api/public/badges/<uuid:token>/", PublicBadgeVerifyView.as_view()),
     path("api/public/badges/<uuid:token>/qr.png", BadgeQRView.as_view()),
     path("api/my/badge/", MyBadgeView.as_view()),
+    path("api/me/", MeView.as_view(), name="me"),
 ]
+
+# Загруженные файлы (чеки) в режиме разработки. В проде — Supabase Storage / отдельный сервер.
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

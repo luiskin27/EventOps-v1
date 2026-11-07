@@ -1,160 +1,64 @@
-import { useMemo, useState } from "react";
-import "./App.css";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { homeFor, useAuth } from "./auth/AuthContext";
+import { Loading } from "./ui";
+import LoginPage from "./pages/LoginPage";
+import VerifyPage from "./pages/VerifyPage";
+import StaffLayout from "./pages/staff/StaffLayout";
+import EventsPage from "./pages/staff/EventsPage";
+import EventPage from "./pages/staff/EventPage";
+import GuestLayout from "./pages/guest/GuestLayout";
+import GuestSchedule from "./pages/guest/GuestSchedule";
+import GuestBadge from "./pages/guest/GuestBadge";
+import GuestPayments from "./pages/guest/GuestPayments";
 
-const API_BASE = "http://localhost:8000";
-const TOKEN_URL = `${API_BASE}/api/token/`;
-
-const roleMeta = {
-  guest: {
-    title: "Гость",
-    subtitle: "Доступ к расписанию, регистрации и участию в событии",
-    accent: "#4f46e5",
-  },
-  staff: {
-    title: "Сотрудник",
-    subtitle: "Доступ к рабочим задачам, управлению и админ-разделам",
-    accent: "#0f766e",
-  },
-};
-
-function App() {
-  const [role, setRole] = useState("guest");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [tokenPreview, setTokenPreview] = useState("");
-
-  const currentRole = roleMeta[role];
-
-  const placeholderUsername = useMemo(() => {
-    return role === "guest" ? "guest1" : "staff1";
-  }, [role]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
-    setTokenPreview("");
-
-    try {
-      const response = await fetch(TOKEN_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const message =
-          data?.detail ||
-          data?.non_field_errors?.[0] ||
-          "Не удалось войти. Проверьте логин и пароль.";
-        throw new Error(message);
-      }
-
-      localStorage.setItem("eventops_access_token", data.access);
-      localStorage.setItem("eventops_refresh_token", data.refresh);
-      localStorage.setItem("eventops_role", role);
-      localStorage.setItem("eventops_username", username);
-
-      setSuccess(`Вход выполнен как ${currentRole.title}.`);
-      setTokenPreview(`${data.access.slice(0, 28)}...`);
-      setPassword("");
-    } catch (err) {
-      setError(err.message || "Ошибка входа.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <main className="page">
-      <section className="card">
-        <div className="brand">
-          <div className="logo">E</div>
-          <div>
-            <h1>EventOps</h1>
-            <p>Единый вход для гостей и сотрудников</p>
-          </div>
-        </div>
-
-        <div className="role-switch">
-          <button
-            type="button"
-            className={role === "guest" ? "role-btn active" : "role-btn"}
-            onClick={() => setRole("guest")}
-          >
-            Гость
-          </button>
-          <button
-            type="button"
-            className={role === "staff" ? "role-btn active" : "role-btn"}
-            onClick={() => setRole("staff")}
-          >
-            Сотрудник
-          </button>
-        </div>
-
-        <div className="role-box" style={{ borderColor: currentRole.accent }}>
-          <h2>{currentRole.title}</h2>
-          <p>{currentRole.subtitle}</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="form">
-          <label>
-            Логин
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder={placeholderUsername}
-              autoComplete="username"
-              required
-            />
-          </label>
-
-          <label>
-            Пароль
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Введите пароль"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-
-          <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? "Вход..." : "Войти"}
-          </button>
-        </form>
-
-        {error ? <div className="message error">{error}</div> : null}
-        {success ? <div className="message success">{success}</div> : null}
-
-        {tokenPreview ? (
-          <div className="token-box">
-            <strong>Токен получен</strong>
-            <p>{tokenPreview}</p>
-          </div>
-        ) : null}
-
-        <p className="hint">
-          Если вход не срабатывает, проверьте, что пользователь уже создан в Django.
-        </p>
-      </section>
-    </main>
-  );
+// Пускает на страницу только нужный тип пользователя
+function RequireKind({ kind, children }) {
+  const { user, ready } = useAuth();
+  if (!ready) return <Loading />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.kind !== kind) return <Navigate to={homeFor(user)} replace />;
+  return children;
 }
 
-export default App;
+function Home() {
+  const { user, ready } = useAuth();
+  if (!ready) return <Loading />;
+  return <Navigate to={homeFor(user)} replace />;
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/verify/:token" element={<VerifyPage />} />
+
+      <Route
+        path="/staff"
+        element={
+          <RequireKind kind="staff">
+            <StaffLayout />
+          </RequireKind>
+        }
+      >
+        <Route index element={<EventsPage />} />
+        <Route path="events/:eventId/:tab?" element={<EventPage />} />
+      </Route>
+
+      <Route
+        path="/guest"
+        element={
+          <RequireKind kind="guest">
+            <GuestLayout />
+          </RequireKind>
+        }
+      >
+        <Route index element={<GuestSchedule />} />
+        <Route path="badge" element={<GuestBadge />} />
+        <Route path="payments" element={<GuestPayments />} />
+      </Route>
+
+      <Route path="*" element={<Home />} />
+    </Routes>
+  );
+}
