@@ -18,3 +18,11 @@ class EventSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]
+
+
+class TeamMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import TeamMember
+
+        model = TeamMember
+        fields = "__all__"

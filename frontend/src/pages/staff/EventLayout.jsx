@@ -1,7 +1,7 @@
 import { Outlet, useParams } from "react-router-dom";
-import { BadgeCheck, CalendarDays, Columns3, CreditCard, FileText, Home, Settings, Users } from "lucide-react";
+import { BadgeCheck, CalendarDays, Columns3, CreditCard, FileText, Home, Settings, UserRound, Users } from "lucide-react";
 import { useItem, useList } from "../../api/hooks";
-import { fmtRange, plural, todayISO } from "../../format";
+import { fmtRange, isOverdueTask, peopleTerms } from "../../format";
 import AppShell, { EventSwitcher } from "../../layout/AppShell";
 import { ErrorNote, Skeleton } from "../../ui";
 
@@ -15,15 +15,16 @@ export default function EventLayout() {
   const pending = useList("payments", { item__event: eventId, status: "PENDING" }, { refetchInterval: 15_000 });
   const pendingDocs = useList("participant-documents", { doc_type__event: eventId, status: "PENDING" }, { refetchInterval: 15_000 });
 
-  const today = todayISO();
-  const overdue = (tasks.data || []).filter((t) => t.status !== "DONE" && t.due_date && t.due_date < today).length;
+  const overdue = (tasks.data || []).filter(isOverdueTask).length;
+  const terms = peopleTerms(event.data?.event_type);
   const base = `/staff/events/${eventId}`;
 
   const items = [
     { to: base, end: true, label: "Обзор", icon: Home },
     { to: `${base}/tasks`, label: "Задачи", icon: Columns3, count: overdue, countKind: "alert", countLabel: "Просрочено:" },
+    { to: `${base}/team`, label: "Команда", icon: UserRound },
     { to: `${base}/schedule`, label: "Расписание", icon: CalendarDays },
-    { to: `${base}/participants`, label: "Участники", icon: Users, count: participants.data?.length, countKind: "muted", countLabel: "Всего:" },
+    { to: `${base}/participants`, label: terms.Many, icon: Users, count: participants.data?.length, countKind: "muted", countLabel: "Всего:" },
     { to: `${base}/payments`, label: "Оплаты", icon: CreditCard, count: pending.data?.length, countKind: "pending", countLabel: "На проверке:" },
     { to: `${base}/documents`, label: "Документы", icon: FileText, count: pendingDocs.data?.length, countKind: "pending", countLabel: "На проверке:" },
     { to: `${base}/badges`, label: "Бейджи", icon: BadgeCheck },
@@ -67,7 +68,7 @@ export default function EventLayout() {
             pendingPayments: pending.data || [],
             pendingDocs: pendingDocs.data || [],
             overdue,
-            peopleLabel: plural(participants.data?.length || 0, "участник", "участника", "участников"),
+            terms,
           }}
         />
       ) : null}

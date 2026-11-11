@@ -49,9 +49,9 @@ export default function LoginPage() {
           <span className="text-base font-semibold">EventOps</span>
         </div>
         <div className="max-w-md">
-          <h2 className="text-4xl font-semibold leading-tight">Всё о вашем мероприятии в одном месте</h2>
+          <h2 className="text-4xl font-semibold leading-tight">Свадьба, о которой не нужно волноваться</h2>
           <ol className="mt-8 space-y-4 text-sm text-indigo-50">
-            {["Войдите по телефону и коду из приглашения", "Оплатите взнос и загрузите чек в личном кабинете", "После проверки появится бейдж с QR-кодом для входа"].map((t, i) => (
+            {["Гости входят по телефону и коду из приглашения", "Программа вечера, бейдж с QR-кодом и всё нужное — в телефоне", "У тамады, диджея и персонала — своё расписание по ссылке"].map((t, i) => (
               <li key={t} className="flex gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-semibold">{i + 1}</span>
                 {t}
@@ -59,7 +59,7 @@ export default function LoginPage() {
             ))}
           </ol>
         </div>
-        <p className="text-xs text-indigo-100">Лагеря, свадьбы, форумы и корпоративное обучение</p>
+        <p className="text-xs text-indigo-100">Свадьбы, корпоративы, форумы и лагеря</p>
       </aside>
 
       <main className="flex items-start justify-center px-4 py-8 sm:px-6 lg:items-center lg:py-12">
@@ -67,11 +67,11 @@ export default function LoginPage() {
           <div className="lg:hidden"><Logo to="/login" /></div>
           <h1 className="mt-8 text-2xl font-semibold lg:mt-0">Вход в EventOps</h1>
           <p className="mt-1 text-sm muted">
-            {mode === "guest" ? "Для участников и гостей мероприятия." : "Для организаторов и команды."}
+            {mode === "guest" ? "Для гостей и участников мероприятия." : "Для организаторов и команды."}
           </p>
 
           <div role="tablist" aria-label="Кто входит" className="mt-6 grid grid-cols-2 rounded-lg border border-slate-200 p-1 dark:border-slate-800">
-            {[["guest", "Я участник"], ["staff", "Я организатор"]].map(([v, l]) => (
+            {[["guest", "Я гость"], ["staff", "Я организатор"]].map(([v, l]) => (
               <button
                 key={v}
                 type="button"
@@ -97,7 +97,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label htmlFor="l-code" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Код из приглашения</label>
-                  <input id="l-code" autoCapitalize="characters" autoComplete="one-time-code" placeholder="FMP001" value={form.code} onChange={set("code")} required aria-invalid={Boolean(error)} aria-describedby="l-code-h" className={cx(input, "uppercase tracking-wider", error ? bad : ok)} />
+                  <input id="l-code" autoCapitalize="characters" autoComplete="one-time-code" placeholder="AIT001" value={form.code} onChange={set("code")} required aria-invalid={Boolean(error)} aria-describedby="l-code-h" className={cx(input, "uppercase tracking-wider", error ? bad : ok)} />
                   <p id="l-code-h" className="mt-1.5 text-xs muted">Организатор присылает его в СМС, WhatsApp или на почту.</p>
                 </div>
               </>

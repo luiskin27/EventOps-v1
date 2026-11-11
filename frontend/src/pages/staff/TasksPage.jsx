@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { AlertTriangle, CalendarDays, Plus, Search } from "lucide-react";
-import { useCrud } from "../../api/hooks";
-import { TASK_STATUS, fmtDate, plural, todayISO } from "../../format";
+import { useCrud, useList } from "../../api/hooks";
+import { TASK_STATUS, fmtDue, isOverdueTask, plural } from "../../format";
 import { Button, ErrorNote, Field, Modal, PageHeader, cx, initials } from "../../ui";
 
 const COLS = [
@@ -11,7 +11,7 @@ const COLS = [
   { key: "DONE", dot: "bg-emerald-500" },
 ];
 
-function TaskForm({ event, task, status, onDone }) {
+function TaskForm({ event, task, status, onDone, team }) {
   const { create, update, remove } = useCrud("tasks");
   const mutation = task ? update : create;
   const [form, setForm] = useState({
@@ -19,11 +19,13 @@ function TaskForm({ event, task, status, onDone }) {
     description: task?.description || "",
     status: task?.status || status || "TODO",
     due_date: task?.due_date || "",
+    due_time: task?.due_time?.slice(0, 5) || "",
+    responsible: task?.responsible ?? "",
   });
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const submit = (e) => {
     e.preventDefault();
-    const body = { ...form, event: event.id, due_date: form.due_date || null };
+    const body = { ...form, event: event.id, due_date: form.due_date || null, due_time: form.due_date && form.due_time ? form.due_time : null, responsible: form.responsible || null };
     mutation.mutate(task ? { id: task.id, ...body } : body, { onSuccess: onDone });
   };
   return (
@@ -37,8 +39,17 @@ function TaskForm({ event, task, status, onDone }) {
             {Object.entries(TASK_STATUS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </Field>
-        <Field label="Дедлайн">
+        <Field label="Ответственный" hint={team.length ? null : "Добавьте людей в разделе «Команда»"}>
+          <select className="input" value={form.responsible} onChange={set("responsible")}>
+            <option value="">Не назначен</option>
+            {team.map((m) => <option key={m.id} value={m.id}>{m.full_name} · {m.position}</option>)}
+          </select>
+        </Field>
+        <Field label="Дедлайн: дата">
           <input className="input" type="date" value={form.due_date} onChange={set("due_date")} />
+        </Field>
+        <Field label="Дедлайн: время" hint="Необязательно">
+          <input className="input" type="time" value={form.due_time} onChange={set("due_time")} disabled={!form.due_date} />
         </Field>
       </div>
       <Field label="Описание">
@@ -57,17 +68,17 @@ function TaskForm({ event, task, status, onDone }) {
 
 export default function TasksPage() {
   const { event, tasks } = useOutletContext();
+  const team = useList("team", { event: event.id });
+  const [who, setWho] = useState("");
   const { update } = useCrud("tasks");
   const [editing, setEditing] = useState(null); // {task} | {status}
   const [q, setQ] = useState("");
   const [onlyOverdue, setOnlyOverdue] = useState(false);
-  const today = todayISO();
-
-  const isOverdue = (t) => t.status !== "DONE" && t.due_date && t.due_date < today;
+  const isOverdue = isOverdueTask;
   const overdue = tasks.filter(isOverdue).length;
   const done = tasks.filter((t) => t.status === "DONE").length;
   const needle = q.trim().toLowerCase();
-  const visible = tasks.filter((t) => (!needle || t.title.toLowerCase().includes(needle)) && (!onlyOverdue || isOverdue(t)));
+  const visible = tasks.filter((t) => (!needle || t.title.toLowerCase().includes(needle)) && (!onlyOverdue || isOverdue(t)) && (!who || String(t.responsible) === who));
 
   return (
     <>
@@ -101,6 +112,11 @@ export default function TasksPage() {
         >
           <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400" aria-hidden="true" /> Только просроченные
         </button>
+        <label htmlFor="t-who" className="sr-only">Ответственный</label>
+        <select id="t-who" value={who} onChange={(e) => setWho(e.target.value)} className="input h-9 w-auto">
+          <option value="">Все ответственные</option>
+          {(team.data || []).map((m) => <option key={m.id} value={m.id}>{m.full_name} · {m.position}</option>)}
+        </select>
       </div>
       <ErrorNote error={update.error} />
 
@@ -130,11 +146,23 @@ export default function TasksPage() {
                       <button type="button" onClick={() => setEditing({ task: t })} className="focus-ring block w-full rounded text-left">
                         <span className={cx("block text-sm font-medium leading-snug", t.status === "DONE" && "text-slate-500 line-through dark:text-slate-400")}>{t.title}</span>
                       </button>
+                      {t.responsible_name ? (
+                        <p className="mt-2 flex items-center gap-2 text-xs">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200" aria-hidden="true">
+                            {initials(t.responsible_name)}
+                          </span>
+                          <span className="min-w-0 truncate">
+                            <span className="sr-only">Ответственный: </span>
+                            <span className="font-medium text-slate-700 dark:text-slate-200">{t.responsible_name}</span>
+                            <span className="muted"> · {t.responsible_position}</span>
+                          </span>
+                        </p>
+                      ) : null}
                       <div className="mt-3 flex items-center justify-between gap-2">
                         {t.due_date ? (
                           <span className={cx("inline-flex items-center gap-1 text-xs tabular-nums", isOverdue(t) ? "font-medium text-rose-700 dark:text-rose-400" : "muted")}>
                             {isOverdue(t) ? <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" /> : <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />}
-                            {fmtDate(t.due_date)}
+                            {fmtDue(t.due_date, t.due_time)}
                           </span>
                         ) : <span />}
                         <div className="flex items-center gap-2">
@@ -147,11 +175,6 @@ export default function TasksPage() {
                           >
                             {Object.entries(TASK_STATUS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                           </select>
-                          {t.assignee_username ? (
-                            <span title={t.assignee_username} className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200">
-                              <span className="sr-only">Исполнитель: </span>{initials(t.assignee_username)}
-                            </span>
-                          ) : null}
                         </div>
                       </div>
                     </li>
@@ -166,7 +189,7 @@ export default function TasksPage() {
 
       {editing ? (
         <Modal title={editing.task ? "Задача" : "Новая задача"} onClose={() => setEditing(null)}>
-          <TaskForm event={event} task={editing.task} status={editing.status} onDone={() => setEditing(null)} />
+          <TaskForm event={event} task={editing.task} status={editing.status} team={team.data || []} onDone={() => setEditing(null)} />
         </Modal>
       ) : null}
     </>

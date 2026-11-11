@@ -114,7 +114,7 @@ export default function CabinetPage() {
       <section aria-labelledby="st" className="card p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 id="st" className="text-sm font-medium muted">Статус участия</h2>
+            <h2 id="st" className="text-sm font-medium muted">Ваш статус</h2>
             <p className="mt-1 text-lg font-semibold">{g.admitted ? "Допущен" : anyPending || docPending ? "Ожидает проверки" : "Не завершено"}</p>
           </div>
           {g.admitted ? <Badge tone="success">Допущен</Badge> : <Badge tone="pending">Не допущен пока</Badge>}

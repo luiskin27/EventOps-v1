@@ -8,7 +8,7 @@ export default function EventForm({ event, onDone }) {
   const mutation = event ? update : create;
   const [form, setForm] = useState({
     title: event?.title || "",
-    event_type: event?.event_type || "OTHER",
+    event_type: event?.event_type || "WEDDING",
     location: event?.location || "",
     start_date: event?.start_date || "",
     end_date: event?.end_date || "",
@@ -27,7 +27,7 @@ export default function EventForm({ event, onDone }) {
   return (
     <form className="space-y-5" onSubmit={submit}>
       <Field label="Название">
-        <input className="input" value={form.title} onChange={set("title")} required placeholder="Форум молодых предпринимателей 2026" />
+        <input className="input" value={form.title} onChange={set("title")} required placeholder="Свадьба Айжан и Тимура" />
       </Field>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Тип мероприятия">
@@ -38,7 +38,7 @@ export default function EventForm({ event, onDone }) {
           </select>
         </Field>
         <Field label="Город и площадка">
-          <input className="input" value={form.location} onChange={set("location")} placeholder="Бишкек, Конгресс-холл «Ала-Тоо»" />
+          <input className="input" value={form.location} onChange={set("location")} placeholder="Бишкек, ресторан «Ала-Тоо Холл»" />
         </Field>
         <Field label="Начало">
           <input className="input" type="date" value={form.start_date} onChange={set("start_date")} />
@@ -47,7 +47,7 @@ export default function EventForm({ event, onDone }) {
           <input className="input" type="date" value={form.end_date} min={form.start_date || undefined} onChange={set("end_date")} />
         </Field>
       </div>
-      <Field label="Описание" hint="Участники увидят его в кабинете">
+      <Field label="Описание" hint="Гости увидят его в своём кабинете">
         <textarea className="input" rows={3} value={form.description} onChange={set("description")} />
       </Field>
       {event ? (

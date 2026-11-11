@@ -1,7 +1,7 @@
 import { Link, useOutletContext } from "react-router-dom";
 import { AlertTriangle, Check, Clock, Info, Plus, Users } from "lucide-react";
 import { useList } from "../../api/hooks";
-import { daysUntil, fmtDate, fmtMoney, fmtShortDay, fmtTime, plural, todayISO } from "../../format";
+import { AUDIENCE, daysUntil, fmtDate, fmtDue, fmtMoney, fmtShortDay, fmtTime, isOverdueTask, plural } from "../../format";
 import { PageHeader, cx } from "../../ui";
 
 const TONES = {
@@ -41,12 +41,11 @@ const ATT = {
 };
 
 export default function OverviewPage() {
-  const { event, tasks, participants, pendingPayments, pendingDocs, overdue } = useOutletContext();
+  const { event, tasks, participants, pendingPayments, pendingDocs, overdue, terms } = useOutletContext();
   const schedule = useList("schedule", { event: event.id });
   const items = useList("payment-items", { event: event.id });
   const approved = useList("payments", { item__event: event.id, status: "APPROVED" });
   const base = `/staff/events/${event.id}`;
-  const today = todayISO();
 
   const done = tasks.filter((t) => t.status === "DONE").length;
   const paidPeople = new Set((approved.data || []).map((p) => p.participant)).size;
@@ -54,7 +53,7 @@ export default function OverviewPage() {
   const expected = (items.data || []).reduce((s, i) => s + Number(i.amount), 0) * participants.length;
   const currency = items.data?.[0]?.currency || "KGS";
   const noBadge = participants.filter((p) => !p.badge_token).length;
-  const overdueTasks = tasks.filter((t) => t.status !== "DONE" && t.due_date && t.due_date < today);
+  const overdueTasks = tasks.filter(isOverdueTask);
   const oldestPending = [...pendingPayments].sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
   const days = daysUntil(event.start_date);
 
@@ -62,7 +61,7 @@ export default function OverviewPage() {
     overdueTasks.length && {
       s: "high",
       title: `${plural(overdueTasks.length, "задача просрочена", "задачи просрочены", "задач просрочено")}`,
-      meta: `«${overdueTasks[0].title}» — срок ${fmtDate(overdueTasks[0].due_date)}`,
+      meta: `«${overdueTasks[0].title}»${overdueTasks[0].responsible_name ? ` — ${overdueTasks[0].responsible_name}, ${overdueTasks[0].responsible_position}` : ""}, срок ${fmtDue(overdueTasks[0].due_date, overdueTasks[0].due_time)}`,
       action: "Открыть",
       to: `${base}/tasks`,
     },
@@ -82,7 +81,7 @@ export default function OverviewPage() {
     },
     noBadge && {
       s: "info",
-      title: `${plural(noBadge, "участнику", "участникам", "участникам")} не выдан бейдж`,
+      title: `Без бейджа: ${terms.count(noBadge)}`,
       meta: "Бейдж с QR-кодом нужен для входа на мероприятие",
       action: "Выдать",
       to: `${base}/badges`,
@@ -111,7 +110,7 @@ export default function OverviewPage() {
       />
 
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi to={`${base}/participants`} label="Участники" value={participants.length} note={`Без бейджа: ${noBadge}`} icon={Users} tone="indigo" />
+        <Kpi to={`${base}/participants`} label={terms.Many} value={participants.length} note={`Без бейджа: ${noBadge}`} icon={Users} tone="indigo" />
         <Kpi to={`${base}/payments`} label="Оплатили" value={paidPeople} note={`${fmtMoney(collected, currency)} · ${pendingPayments.length} ждут проверки`} icon={Check} tone="emerald" />
         <Kpi to={`${base}/payments`} label="Оплаты на проверке" value={pendingPayments.length} note={oldestPending ? `Самая старая — ${fmtDate(oldestPending.created_at)}` : "Всё проверено"} icon={Clock} tone="amber" />
         <Kpi to={`${base}/tasks`} label="Просроченные задачи" value={overdue} note={overdue ? `Самая давняя — ${fmtDate(overdueTasks[0].due_date)}` : "Всё в срок"} icon={AlertTriangle} tone="rose" alert={overdue > 0} />
@@ -185,8 +184,8 @@ export default function OverviewPage() {
                   <p className="truncate text-xs muted">{u.location}</p>
                 </div>
                 <div className="col-span-12 sm:col-span-2 sm:text-right">
-                  <span className={cx("rounded-full px-2 py-0.5 text-xs font-medium", u.is_public ? "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300" : "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300")}>
-                    {u.is_public ? "Участники" : "Персонал"}
+                  <span className={cx("whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium", AUDIENCE[u.audience]?.cls)}>
+                    {AUDIENCE[u.audience]?.label}
                   </span>
                 </div>
               </li>

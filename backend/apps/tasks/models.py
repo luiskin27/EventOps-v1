@@ -25,10 +25,19 @@ class Task(models.Model):
         "Статус", max_length=20, choices=Status.choices, default=Status.TODO
     )
     due_date = models.DateField("Срок", null=True, blank=True)
+    due_time = models.TimeField("Время дедлайна", null=True, blank=True)
+    responsible = models.ForeignKey(
+        "events.TeamMember",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasks",
+        verbose_name="Ответственный",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["due_date", "-created_at"]
+        ordering = ["due_date", "due_time", "-created_at"]
 
     def __str__(self):
         return self.title

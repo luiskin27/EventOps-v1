@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { BadgeCheck, CalendarDays, Home, Upload } from "lucide-react";
 import AppShell from "../../layout/AppShell";
+import { peopleTerms } from "../../format";
 import { useGuestData } from "./useGuestData";
 
 export default function GuestLayout() {
@@ -9,11 +10,14 @@ export default function GuestLayout() {
   return (
     <AppShell
       nav={{
-        section: "Участник",
+        section: peopleTerms(g.event.data?.event_type).One,
         items: [
           { to: "/guest", end: true, label: "Кабинет", icon: Home },
           { to: "/guest/schedule", label: "Моё расписание", icon: CalendarDays },
-          { to: "/guest/payments", label: "Оплата и документы", icon: Upload, count: g.needsAction, countKind: "alert", countLabel: "Требует действия:" },
+          // На свадьбе гостям обычно нечего оплачивать и загружать — тогда пункт скрыт
+          ...((g.items.data?.length || g.docTypes.data?.length)
+            ? [{ to: "/guest/payments", label: "Оплата и документы", icon: Upload, count: g.needsAction, countKind: "alert", countLabel: "Требует действия:" }]
+            : []),
           { to: "/guest/badge", label: "Мой бейдж", icon: BadgeCheck },
         ],
         eventCard: (
