@@ -24,7 +24,7 @@ async function downloadCsv(eventId) {
   URL.revokeObjectURL(url);
 }
 
-function ParticipantForm({ event, roles, participant, count, onDone }) {
+function ParticipantForm({ event, roles, participant, count, onDone, terms }) {
   const { create, update } = useCrud("participants");
   const mutation = participant ? update : create;
   const [form, setForm] = useState({
@@ -47,10 +47,10 @@ function ParticipantForm({ event, roles, participant, count, onDone }) {
         <input className="input" value={form.full_name} onChange={set("full_name")} required autoComplete="off" />
       </Field>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Телефон" hint="По нему участник входит в кабинет">
+        <Field label="Телефон" hint={`По нему ${terms.one} входит в кабинет`}>
           <input className="input tabular-nums" type="tel" value={form.phone} onChange={set("phone")} placeholder="+996 555 123 456" />
         </Field>
-        <Field label="Код для входа" hint="Отправьте участнику вместе со ссылкой">
+        <Field label="Код для входа" hint={`Отправьте ${terms.dat} вместе со ссылкой`}>
           <input className="input uppercase tracking-wider" value={form.guest_code} onChange={set("guest_code")} />
         </Field>
         <Field label="Роль">
@@ -68,14 +68,14 @@ function ParticipantForm({ event, roles, participant, count, onDone }) {
       </Field>
       <ErrorNote error={mutation.error} />
       <div className="flex justify-end">
-        <Button type="submit" disabled={mutation.isPending}>{participant ? "Сохранить" : "Добавить участника"}</Button>
+        <Button type="submit" disabled={mutation.isPending}>{participant ? "Сохранить" : `Добавить ${terms.acc}`}</Button>
       </div>
     </form>
   );
 }
 
 export default function ParticipantsPage() {
-  const { event, participants } = useOutletContext();
+  const { event, participants, terms } = useOutletContext();
   const roles = useList("roles", { event: event.id });
   const approved = useList("payments", { item__event: event.id, status: "APPROVED" });
   const items = useList("payment-items", { event: event.id });
@@ -101,14 +101,14 @@ export default function ParticipantsPage() {
   return (
     <>
       <PageHeader
-        title="Участники"
-        subtitle={`${participants.length} в списке. Каждый входит в кабинет по телефону и своему коду.`}
+        title={terms.Many}
+        subtitle={`${terms.count(participants.length)} в списке. Каждый входит в кабинет по телефону и своему коду.`}
         actions={
           <>
             <Button variant="secondary" onClick={() => downloadCsv(event.id).catch(setCsvError)}>
               <Download className="h-4 w-4" /> Экспорт CSV
             </Button>
-            <Button onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> Участник</Button>
+            <Button onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> {terms.One}</Button>
           </>
         }
       />
@@ -117,7 +117,7 @@ export default function ParticipantsPage() {
       <section className="card">
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 p-3 dark:border-slate-800">
           <div className="relative w-full sm:w-72">
-            <label htmlFor="p-q" className="sr-only">Поиск участников</label>
+            <label htmlFor="p-q" className="sr-only">Поиск: {terms.many}</label>
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-500" aria-hidden="true" />
             <input id="p-q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Имя, телефон, email или код" className="input h-9 pl-9" />
           </div>
@@ -131,8 +131,8 @@ export default function ParticipantsPage() {
 
         {participants.length === 0 ? (
           <div className="p-5">
-            <Empty icon={Users} title="Участников пока нет" action={<Button onClick={() => setEditing("new")}>Добавить участника</Button>}>
-              Добавьте участников — каждый получит код и сможет войти в кабинет со своего телефона.
+            <Empty icon={Users} title={`${terms.Many} пока не добавлены`} action={<Button onClick={() => setEditing("new")}>Добавить {terms.acc}</Button>}>
+              Добавьте {terms.gen} — каждый получит код и сможет войти в кабинет со своего телефона.
             </Empty>
           </div>
         ) : (
@@ -141,7 +141,7 @@ export default function ParticipantsPage() {
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                   <tr className="border-b border-slate-200 dark:border-slate-800">
-                    <th scope="col" className="px-4 py-2.5 font-medium">Участник</th>
+                    <th scope="col" className="px-4 py-2.5 font-medium">{terms.One}</th>
                     <th scope="col" className="px-2 py-2.5 font-medium">Телефон</th>
                     <th scope="col" className="px-2 py-2.5 font-medium">Роль</th>
                     <th scope="col" className="px-2 py-2.5 font-medium">Код</th>
@@ -201,13 +201,14 @@ export default function ParticipantsPage() {
       </section>
 
       {editing ? (
-        <Modal title={editing === "new" ? "Новый участник" : editing.full_name} onClose={() => setEditing(null)}>
+        <Modal title={editing === "new" ? `Новый ${terms.one}` : editing.full_name} onClose={() => setEditing(null)}>
           <ParticipantForm
             event={event}
             roles={roles.data || []}
             count={participants.length}
             participant={editing === "new" ? null : editing}
             onDone={() => setEditing(null)}
+            terms={terms}
           />
         </Modal>
       ) : null}

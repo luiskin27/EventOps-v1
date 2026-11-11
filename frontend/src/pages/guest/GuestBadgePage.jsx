@@ -33,7 +33,7 @@ export default function GuestBadgePage() {
         ) : (
           <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">
             <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            {!b ? "Бейдж ещё не выдан организатором." : !g.allPaid ? "QR-код заработает после подтверждения оплаты." : "Бейдж отключён организатором."}
+            {!b ? "Бейдж ещё не выдан организатором." : !g.allPaid ? "QR-код заработает после подтверждения оплаты." : !g.allDocs ? "QR-код заработает, когда организатор примет ваши документы." : "Бейдж отключён организатором."}
           </p>
         )}
       </div>

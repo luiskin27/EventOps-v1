@@ -156,7 +156,7 @@ export default function PaymentsPage() {
                 <div className="relative ml-auto w-full sm:w-52">
                   <label htmlFor="pay-q" className="sr-only">Поиск по участнику</label>
                   <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-500" aria-hidden="true" />
-                  <input id="pay-q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Имя участника" className="input h-9 pl-9" />
+                  <input id="pay-q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Имя" className="input h-9 pl-9" />
                 </div>
               </div>
 
@@ -172,7 +172,7 @@ export default function PaymentsPage() {
                     <table className="w-full text-left text-sm">
                       <thead className="sticky top-0 z-10 bg-slate-50 text-xs text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                         <tr className="border-b border-slate-200 dark:border-slate-800">
-                          <th scope="col" className="px-4 py-2.5 font-medium">Участник</th>
+                          <th scope="col" className="px-4 py-2.5 font-medium">Плательщик</th>
                           <th scope="col" className="px-2 py-2.5 font-medium">За что</th>
                           <th scope="col" className="px-2 py-2.5 text-right font-medium">Сумма</th>
                           <th scope="col" className="px-2 py-2.5 font-medium">Загружен</th>

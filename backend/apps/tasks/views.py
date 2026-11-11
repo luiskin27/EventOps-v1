@@ -5,6 +5,6 @@ from .serializers import TaskSerializer
 
 
 class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all()
+    queryset = Task.objects.select_related("assignee", "responsible")
     serializer_class = TaskSerializer
-    filterset_fields = ["event", "status", "assignee"]
+    filterset_fields = ["event", "status", "assignee", "responsible"]

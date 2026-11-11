@@ -60,7 +60,7 @@ function TemplateEditor({ event, template, sample }) {
 }
 
 export default function BadgesPage() {
-  const { event, participants } = useOutletContext();
+  const { event, participants, terms } = useOutletContext();
   const templates = useList("badge-templates", { event: event.id });
   const badges = useCrud("badges", ["participants"]);
   const without = participants.filter((p) => !p.badge_token);
@@ -87,7 +87,7 @@ export default function BadgesPage() {
 
       <section className="card">
         <div className="card-head">
-          <h2 className="text-lg font-semibold">Участники</h2>
+          <h2 className="text-lg font-semibold">{terms.Many}</h2>
           <span className="text-xs muted">Выдано {participants.length - without.length} из {participants.length}</span>
         </div>
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">

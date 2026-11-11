@@ -11,7 +11,10 @@ import SchedulePage from "./pages/staff/SchedulePage";
 import ParticipantsPage from "./pages/staff/ParticipantsPage";
 import PaymentsPage from "./pages/staff/PaymentsPage";
 import BadgesPage from "./pages/staff/BadgesPage";
+import DocumentsPage from "./pages/staff/DocumentsPage";
 import SettingsPage from "./pages/staff/SettingsPage";
+import TeamPage from "./pages/staff/TeamPage";
+import PublicSchedulePage from "./pages/PublicSchedulePage";
 import GuestLayout from "./pages/guest/GuestLayout";
 import CabinetPage from "./pages/guest/CabinetPage";
 import GuestSchedulePage from "./pages/guest/GuestSchedulePage";
@@ -39,14 +42,17 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/verify/:token" element={<VerifyPage />} />
+      <Route path="/s/:token" element={<PublicSchedulePage />} />
 
       <Route path="/staff" element={<RequireKind kind="staff"><EventsPage /></RequireKind>} />
       <Route path="/staff/events/:eventId" element={<RequireKind kind="staff"><EventLayout /></RequireKind>}>
         <Route index element={<OverviewPage />} />
         <Route path="tasks" element={<TasksPage />} />
+        <Route path="team" element={<TeamPage />} />
         <Route path="schedule" element={<SchedulePage />} />
         <Route path="participants" element={<ParticipantsPage />} />
         <Route path="payments" element={<PaymentsPage />} />
+        <Route path="documents" element={<DocumentsPage />} />
         <Route path="badges" element={<BadgesPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

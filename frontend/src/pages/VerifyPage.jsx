@@ -21,6 +21,7 @@ export default function VerifyPage() {
   const checks = d
     ? [
         { label: "Бейдж", ok: d.valid, value: d.valid ? "Действителен" : "Отключён" },
+        d.documents && d.documents !== "none" && { label: "Документы", ok: d.documents === "ok", wait: d.documents === "pending", value: { ok: "Приняты", pending: "На проверке", missing: "Не загружены" }[d.documents] },
         d.payment && { label: "Оплата", ok: d.payment === "paid", wait: d.payment === "pending", value: { paid: "Подтверждена", pending: "На проверке", unpaid: "Не оплачено", none: "Не требуется" }[d.payment] },
       ].filter(Boolean)
     : [];

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarDays, CheckCircle2, CircleDashed, MapPin, Plus, Search, Users } from "lucide-react";
 import { useList } from "../../api/hooks";
-import { EVENT_TYPES, fmtRange, plural } from "../../format";
+import { EVENT_TYPES, fmtRange, peopleTerms } from "../../format";
 import AppShell from "../../layout/AppShell";
 import { Badge, Button, Modal, PageHeader, Skeleton, Tabs, ErrorNote } from "../../ui";
 import EventForm from "./EventForm";
@@ -41,7 +41,7 @@ export default function EventsPage() {
     <AppShell>
       <PageHeader
         title="Мероприятия"
-        subtitle="Выберите мероприятие — задачи, расписание, оплаты и участники откроются в его контексте."
+        subtitle="Свадьбы, корпоративы, форумы и лагеря. Выберите мероприятие — гости, расписание и задачи откроются в его контексте."
         actions={
           <Button size="lg" onClick={() => setCreating(true)}>
             <Plus className="h-4 w-4" /> Создать мероприятие
@@ -107,9 +107,9 @@ export default function EventsPage() {
                     </div>
                   ) : null}
                   <div className="flex items-center gap-2">
-                    <dt className="sr-only">Участники</dt>
+                    <dt className="sr-only">Гости и участники</dt>
                     <Users className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" strokeWidth={1.75} aria-hidden="true" />
-                    <dd>{plural(s.people, "участник", "участника", "участников")}</dd>
+                    <dd>{peopleTerms(e.event_type).count(s.people)}</dd>
                   </div>
                 </dl>
                 <div className="mt-auto pt-5">
@@ -136,7 +136,7 @@ export default function EventsPage() {
                 <Plus className="h-5 w-5" />
               </span>
               <span className="text-sm font-medium">Новое мероприятие</span>
-              <span className="text-xs muted">Лагерь, свадьба, форум или корпоративное обучение</span>
+              <span className="text-xs muted">Свадьба, корпоратив, форум или лагерь</span>
             </button>
           </li>
         ) : null}

@@ -1,6 +1,6 @@
 export const EVENT_TYPES = {
-  CAMP: "Лагерь",
   WEDDING: "Свадьба",
+  CAMP: "Лагерь",
   TRAINING: "Корпоративное обучение",
   OTHER: "Другое",
 };
@@ -70,3 +70,32 @@ export const todayISO = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
+
+// Как называть людей мероприятия: на свадьбе — «гости», на остальных — «участники»
+export function peopleTerms(eventType) {
+  const w = eventType === "WEDDING";
+  return w
+    ? { Many: "Гости", many: "гости", One: "Гость", one: "гость", gen: "гостей", dat: "гостю", datMany: "гостям", acc: "гостя",
+        count: (n) => plural(n, "гость", "гостя", "гостей") }
+    : { Many: "Участники", many: "участники", One: "Участник", one: "участник", gen: "участников", dat: "участнику", datMany: "участникам", acc: "участника",
+        count: (n) => plural(n, "участник", "участника", "участников") };
+}
+
+// Для кого пункт расписания
+export const AUDIENCE = {
+  GUESTS: { label: "Гости", cls: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300" , dot: "bg-sky-500" },
+  HOSTS: { label: "Ведущий и диджей", cls: "bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-300" , dot: "bg-fuchsia-500" },
+  STAFF: { label: "Персонал", cls: "bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300" , dot: "bg-amber-500" },
+  TEAM: { label: "Организаторы", cls: "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300" , dot: "bg-violet-500" },
+};
+
+// Дедлайн задачи: дата + необязательное время → «12 июня, 15:00»
+export function fmtDue(date, time) {
+  if (!date) return "";
+  return time ? `${fmtDate(date)}, ${time.slice(0, 5)}` : fmtDate(date);
+}
+export function isOverdueTask(t) {
+  if (t.status === "DONE" || !t.due_date) return false;
+  const end = new Date(`${t.due_date}T${t.due_time || "23:59:59"}`);
+  return end < new Date();
+}

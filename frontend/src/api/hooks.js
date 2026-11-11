@@ -37,3 +37,29 @@ export function useCrud(resource, alsoInvalidate = []) {
 }
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => api("me/") });
+
+// Защищённый файл (скан документа): качаем с JWT и показываем через blob-ссылку
+export function useBlobUrl(path) {
+  const query = useQuery({
+    queryKey: ["blob", path],
+    enabled: Boolean(path),
+    staleTime: Infinity,
+    gcTime: 60_000,
+    queryFn: async () => {
+      const res = await api(path.replace(/^\/api\//, ""), { raw: true });
+      return URL.createObjectURL(await res.blob());
+    },
+  });
+  return query;
+}
+
+export async function openProtectedFile(path, filename) {
+  const res = await api(path.replace(/^\/api\//, ""), { raw: true });
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  if (filename) a.download = filename;
+  else a.target = "_blank";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
