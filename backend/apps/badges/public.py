@@ -12,6 +12,22 @@ from apps.participants.access import get_participant
 from .models import Badge, BadgeTemplate
 
 
+def payment_status(participant):
+    """paid / pending / unpaid / none — по всем статьям оплаты события."""
+    from apps.payments.models import Payment, PaymentItem
+
+    item_ids = set(PaymentItem.objects.filter(event_id=participant.event_id).values_list("pk", flat=True))
+    if not item_ids:
+        return "none"
+    payments = Payment.objects.filter(participant=participant, item_id__in=item_ids)
+    approved = set(payments.filter(status=Payment.Status.APPROVED).values_list("item_id", flat=True))
+    if approved >= item_ids:
+        return "paid"
+    if payments.filter(status=Payment.Status.PENDING).exists():
+        return "pending"
+    return "unpaid"
+
+
 
 class PublicBadgeVerifyView(APIView):
     """Публичная проверка бейджа по токену из QR-кода. Вход не нужен."""
@@ -36,8 +52,12 @@ class PublicBadgeVerifyView(APIView):
         show_name = template.show_name if template else True
         show_role = template.show_role if template else True
 
+        payment = payment_status(participant)
         data = {
             "valid": badge.is_active,
+            "payment": payment,
+            # Допуск на вход: бейдж активен и всё оплачено (или оплачивать нечего)
+            "admitted": badge.is_active and payment in ("paid", "none"),
             "event": event.title,
         }
         if show_name:
@@ -83,8 +103,11 @@ class MyBadgeView(APIView):
 
         template = BadgeTemplate.objects.filter(event=participant.event).first()
         token = str(badge.verification_token)
+        payment = payment_status(participant)
         return Response({
             "valid": badge.is_active,
+            "payment": payment,
+            "admitted": badge.is_active and payment in ("paid", "none"),
             "event": participant.event.title,
             "full_name": participant.full_name,
             "role": participant.role.name if participant.role_id else None,
