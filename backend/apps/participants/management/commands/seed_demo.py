@@ -14,6 +14,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.badges.models import Badge, BadgeTemplate
+from apps.documents.models import DocumentType
 from apps.events.models import Event
 from apps.participants.models import Participant, Role
 from apps.payments.models import PaymentItem
@@ -89,6 +90,15 @@ class Command(BaseCommand):
 
         for title, amount in (("Взнос за смену", 18000), ("Трансфер", 1500)):
             PaymentItem.objects.get_or_create(event=event, title=title, defaults={"amount": amount})
+
+        for order, (title, hint, required) in enumerate((
+            ("Удостоверение личности", "Фото лицевой стороны ID-карты или паспорта, целиком и без бликов", True),
+            ("Согласие родителей", "Подписанный бланк — скачайте в документах мероприятия", True),
+            ("Медицинская справка", "Если есть аллергии или хронические заболевания", False),
+        )):
+            DocumentType.objects.get_or_create(
+                event=event, title=title, defaults={"description": hint, "is_required": required, "order": order}
+            )
 
         if not event.tasks.exists():
             Task.objects.create(event=event, title="Закупить продукты на 1-й день", assignee=staff,

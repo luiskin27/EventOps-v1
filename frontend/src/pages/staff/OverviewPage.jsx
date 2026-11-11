@@ -41,7 +41,7 @@ const ATT = {
 };
 
 export default function OverviewPage() {
-  const { event, tasks, participants, pendingPayments, overdue } = useOutletContext();
+  const { event, tasks, participants, pendingPayments, pendingDocs, overdue } = useOutletContext();
   const schedule = useList("schedule", { event: event.id });
   const items = useList("payment-items", { event: event.id });
   const approved = useList("payments", { item__event: event.id, status: "APPROVED" });
@@ -72,6 +72,13 @@ export default function OverviewPage() {
       meta: `Самая старая — от ${oldestPending.participant_name}, ${fmtDate(oldestPending.created_at)}`,
       action: "Проверить",
       to: `${base}/payments`,
+    },
+    pendingDocs.length && {
+      s: "mid",
+      title: `${plural(pendingDocs.length, "документ ждёт", "документа ждут", "документов ждут")} проверки`,
+      meta: `Самый старый — от ${pendingDocs[0].participant_name}, ${fmtDate(pendingDocs[0].created_at)}`,
+      action: "Проверить",
+      to: `${base}/documents`,
     },
     noBadge && {
       s: "info",

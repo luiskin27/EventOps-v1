@@ -1,5 +1,5 @@
 import { Outlet, useParams } from "react-router-dom";
-import { BadgeCheck, CalendarDays, Columns3, CreditCard, Home, Settings, Users } from "lucide-react";
+import { BadgeCheck, CalendarDays, Columns3, CreditCard, FileText, Home, Settings, Users } from "lucide-react";
 import { useItem, useList } from "../../api/hooks";
 import { fmtRange, plural, todayISO } from "../../format";
 import AppShell, { EventSwitcher } from "../../layout/AppShell";
@@ -13,6 +13,7 @@ export default function EventLayout() {
   const tasks = useList("tasks", { event: eventId });
   const participants = useList("participants", { event: eventId });
   const pending = useList("payments", { item__event: eventId, status: "PENDING" }, { refetchInterval: 15_000 });
+  const pendingDocs = useList("participant-documents", { doc_type__event: eventId, status: "PENDING" }, { refetchInterval: 15_000 });
 
   const today = todayISO();
   const overdue = (tasks.data || []).filter((t) => t.status !== "DONE" && t.due_date && t.due_date < today).length;
@@ -24,6 +25,7 @@ export default function EventLayout() {
     { to: `${base}/schedule`, label: "Расписание", icon: CalendarDays },
     { to: `${base}/participants`, label: "Участники", icon: Users, count: participants.data?.length, countKind: "muted", countLabel: "Всего:" },
     { to: `${base}/payments`, label: "Оплаты", icon: CreditCard, count: pending.data?.length, countKind: "pending", countLabel: "На проверке:" },
+    { to: `${base}/documents`, label: "Документы", icon: FileText, count: pendingDocs.data?.length, countKind: "pending", countLabel: "На проверке:" },
     { to: `${base}/badges`, label: "Бейджи", icon: BadgeCheck },
     { to: `${base}/settings`, label: "Настройки мероприятия", icon: Settings },
   ];
@@ -63,6 +65,7 @@ export default function EventLayout() {
             tasks: tasks.data || [],
             participants: participants.data || [],
             pendingPayments: pending.data || [],
+            pendingDocs: pendingDocs.data || [],
             overdue,
             peopleLabel: plural(participants.data?.length || 0, "участник", "участника", "участников"),
           }}

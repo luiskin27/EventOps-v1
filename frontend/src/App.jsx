@@ -11,6 +11,7 @@ import SchedulePage from "./pages/staff/SchedulePage";
 import ParticipantsPage from "./pages/staff/ParticipantsPage";
 import PaymentsPage from "./pages/staff/PaymentsPage";
 import BadgesPage from "./pages/staff/BadgesPage";
+import DocumentsPage from "./pages/staff/DocumentsPage";
 import SettingsPage from "./pages/staff/SettingsPage";
 import GuestLayout from "./pages/guest/GuestLayout";
 import CabinetPage from "./pages/guest/CabinetPage";
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="schedule" element={<SchedulePage />} />
         <Route path="participants" element={<ParticipantsPage />} />
         <Route path="payments" element={<PaymentsPage />} />
+        <Route path="documents" element={<DocumentsPage />} />
         <Route path="badges" element={<BadgesPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

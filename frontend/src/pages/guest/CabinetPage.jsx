@@ -41,7 +41,7 @@ export function BadgeAside({ g }) {
       ) : (
         <p className="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">
           <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          {b ? "QR-код заработает после подтверждения оплаты." : "Бейдж появится, когда организатор его выдаст."}
+          {b ? "QR-код заработает, когда организатор подтвердит оплату и документы." : "Бейдж появится, когда организатор его выдаст."}
         </p>
       )}
     </section>
@@ -59,8 +59,30 @@ export default function CabinetPage() {
   const firstName = g.participant.full_name.split(" ").slice(-1)[0];
   const left = daysUntil(ev?.start_date);
 
+  const docTypes = (g.docTypes.data || []).filter((t) => t.is_required);
   const anyRejected = items.some((it) => g.itemState(it).state === "rejected");
   const anyPending = items.some((it) => g.itemState(it).state === "pending");
+  const docRejected = docTypes.some((t) => g.docState(t).state === "rejected");
+  const docPending = docTypes.some((t) => g.docState(t).state === "pending");
+
+  // Единый список «что осталось сделать»: оплаты + обязательные документы
+  const todo = [
+    ...items.map((it) => ({
+      key: `p${it.id}`,
+      title: `${it.title} · ${fmtMoney(it.amount, it.currency)}`,
+      ...g.itemState(it),
+      text: { approved: "Оплата подтверждена", pending: "Чек на проверке у организатора", rejected: "Чек отклонён — загрузите новый", none: "Оплатите и загрузите чек" },
+      cta: { rejected: "Загрузить снова", none: "Загрузить чек" },
+    })),
+    ...docTypes.map((t) => ({
+      key: `d${t.id}`,
+      title: t.title,
+      ...g.docState(t),
+      text: { approved: "Документ принят", pending: "Документ на проверке у организатора", rejected: "Нужна замена — загрузите заново", none: t.description || "Загрузите фото или скан" },
+      cta: { rejected: "Загрузить снова", none: "Загрузить" },
+    })),
+  ];
+
   const steps = [
     { name: "Регистрация", note: "Готово", kind: "done" },
     {
@@ -68,8 +90,13 @@ export default function CabinetPage() {
       note: items.length === 0 ? "Не требуется" : g.allPaid ? "Подтверждена" : anyRejected ? "Чек отклонён" : anyPending ? "На проверке" : "Нужно оплатить",
       kind: g.allPaid ? "done" : anyRejected ? "bad" : anyPending ? "wait" : "todo",
     },
+    {
+      name: "Документы",
+      note: docTypes.length === 0 ? "Не требуются" : g.allDocs ? "Приняты" : docRejected ? "Нужна замена" : docPending ? "На проверке" : "Нужно загрузить",
+      kind: g.allDocs ? "done" : docRejected ? "bad" : docPending ? "wait" : "todo",
+    },
     { name: "Бейдж", note: g.hasBadge ? "Выдан" : "Ещё не выдан", kind: g.hasBadge ? "done" : "todo" },
-    { name: "Допуск", note: g.admitted ? "Можно приходить" : "После оплаты и бейджа", kind: g.admitted ? "done" : "todo" },
+    { name: "Допуск", note: g.admitted ? "Можно приходить" : "После оплаты, документов и бейджа", kind: g.admitted ? "done" : "todo" },
   ];
   const doneSteps = steps.filter((s) => s.kind === "done").length;
   const day = days[Math.min(dayIdx, days.length - 1)];
@@ -80,7 +107,7 @@ export default function CabinetPage() {
         <h1 className="text-2xl font-semibold">Здравствуйте, {firstName}</h1>
         <p className="mt-1 text-sm muted">
           {left > 0 ? `До начала ${plural(left, "день", "дня", "дней")}. ` : ""}
-          {g.admitted ? "Всё готово — ждём вас!" : `Осталось ${plural(4 - doneSteps, "шаг", "шага", "шагов")} до допуска.`}
+          {g.admitted ? "Всё готово — ждём вас!" : `Осталось ${plural(steps.length - doneSteps, "шаг", "шага", "шагов")} до допуска.`}
         </p>
       </div>
 
@@ -88,11 +115,11 @@ export default function CabinetPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 id="st" className="text-sm font-medium muted">Статус участия</h2>
-            <p className="mt-1 text-lg font-semibold">{g.admitted ? "Допущен" : anyPending ? "Ожидает проверки" : "Не завершено"}</p>
+            <p className="mt-1 text-lg font-semibold">{g.admitted ? "Допущен" : anyPending || docPending ? "Ожидает проверки" : "Не завершено"}</p>
           </div>
           {g.admitted ? <Badge tone="success">Допущен</Badge> : <Badge tone="pending">Не допущен пока</Badge>}
         </div>
-        <ol className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <ol className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-5">
           {steps.map((s) => {
             const [bar, icon, Icon] = STEP[s.kind];
             return (
@@ -115,49 +142,40 @@ export default function CabinetPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          {items.length ? (
+          {todo.length ? (
             <section aria-labelledby="todo" className="card">
               <div className="card-head">
                 <h2 id="todo" className="text-lg font-semibold">Что осталось сделать</h2>
-                <span className="text-sm tabular-nums muted">
-                  {items.filter((it) => g.itemState(it).state === "approved").length} из {items.length}
-                </span>
+                <span className="text-sm tabular-nums muted">{todo.filter((t) => t.state === "approved").length} из {todo.length}</span>
               </div>
               <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {items.map((it) => {
-                  const { state, last } = g.itemState(it);
-                  const view = {
-                    approved: ["done", "Оплата подтверждена", null],
-                    pending: ["wait", "Чек на проверке у организатора", null],
-                    rejected: ["bad", "Чек отклонён — загрузите новый", "Загрузить снова"],
-                    none: ["todo", "Оплатите и загрузите чек", "Загрузить чек"],
-                  }[state];
-                  const [, icon, Icon] = STEP[view[0]];
+                {todo.map((t) => {
+                  const kind = { approved: "done", pending: "wait", rejected: "bad", none: "todo" }[t.state];
+                  const [, icon, Icon] = STEP[kind];
+                  const cta = t.cta[t.state];
                   return (
-                    <li key={it.id} className="flex flex-wrap items-start gap-3 px-4 py-4 sm:flex-nowrap sm:px-6">
+                    <li key={t.key} className="flex flex-wrap items-start gap-3 px-4 py-4 sm:flex-nowrap sm:px-6">
                       <span className={cx("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", icon)}>
                         <Icon className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <div className="min-w-0 flex-1 max-sm:basis-[calc(100%-2.75rem)]">
-                        <p className={cx("text-sm font-medium", state === "approved" && "text-slate-500 line-through dark:text-slate-400")}>
-                          {it.title} · {fmtMoney(it.amount, it.currency)}
-                        </p>
-                        <p className="mt-0.5 text-xs muted">{view[1]}</p>
-                        {state === "rejected" && last?.admin_comment ? (
+                        <p className={cx("text-sm font-medium", t.state === "approved" && "text-slate-500 line-through dark:text-slate-400")}>{t.title}</p>
+                        <p className="mt-0.5 text-xs muted">{t.text[t.state]}</p>
+                        {t.state === "rejected" && t.last?.admin_comment ? (
                           <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-900 dark:bg-rose-500/10 dark:text-rose-100">
-                            <span className="font-medium">Комментарий администратора:</span> {last.admin_comment}
+                            <span className="font-medium">Комментарий администратора:</span> {t.last.admin_comment}
                           </p>
                         ) : null}
                       </div>
-                      {view[2] ? (
+                      {cta ? (
                         <Link
                           to="/guest/payments"
                           className={cx(
                             "focus-ring inline-flex h-11 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-medium max-sm:ml-11 max-sm:w-[calc(100%-2.75rem)] lg:h-9",
-                            state === "rejected" ? "bg-indigo-600 text-white hover:bg-indigo-700" : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                            t.state === "rejected" ? "bg-indigo-600 text-white hover:bg-indigo-700" : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                           )}
                         >
-                          {view[2]}
+                          {cta}
                         </Link>
                       ) : null}
                     </li>

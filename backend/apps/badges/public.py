@@ -12,6 +12,31 @@ from apps.participants.access import get_participant
 from .models import Badge, BadgeTemplate
 
 
+def documents_status(participant):
+    """ok / pending / missing / none — по обязательным типам документов события."""
+    from apps.documents.models import DocumentType, ParticipantDocument
+
+    required = set(
+        DocumentType.objects.filter(event_id=participant.event_id, is_required=True).values_list("pk", flat=True)
+    )
+    if not required:
+        return "none"
+    docs = ParticipantDocument.objects.filter(participant=participant, doc_type_id__in=required)
+    approved = set(docs.filter(status=ParticipantDocument.Status.APPROVED).values_list("doc_type_id", flat=True))
+    if approved >= required:
+        return "ok"
+    if docs.filter(status=ParticipantDocument.Status.PENDING).exists():
+        return "pending"
+    return "missing"
+
+
+def admission(badge, participant):
+    payment = payment_status(participant)
+    documents = documents_status(participant)
+    admitted = badge.is_active and payment in ("paid", "none") and documents in ("ok", "none")
+    return payment, documents, admitted
+
+
 def payment_status(participant):
     """paid / pending / unpaid / none — по всем статьям оплаты события."""
     from apps.payments.models import Payment, PaymentItem
@@ -52,12 +77,13 @@ class PublicBadgeVerifyView(APIView):
         show_name = template.show_name if template else True
         show_role = template.show_role if template else True
 
-        payment = payment_status(participant)
+        payment, documents, admitted = admission(badge, participant)
         data = {
             "valid": badge.is_active,
             "payment": payment,
-            # Допуск на вход: бейдж активен и всё оплачено (или оплачивать нечего)
-            "admitted": badge.is_active and payment in ("paid", "none"),
+            "documents": documents,
+            # Допуск на вход: бейдж активен, всё оплачено и обязательные документы приняты
+            "admitted": admitted,
             "event": event.title,
         }
         if show_name:
@@ -103,11 +129,12 @@ class MyBadgeView(APIView):
 
         template = BadgeTemplate.objects.filter(event=participant.event).first()
         token = str(badge.verification_token)
-        payment = payment_status(participant)
+        payment, documents, admitted = admission(badge, participant)
         return Response({
             "valid": badge.is_active,
             "payment": payment,
-            "admitted": badge.is_active and payment in ("paid", "none"),
+            "documents": documents,
+            "admitted": admitted,
             "event": participant.event.title,
             "full_name": participant.full_name,
             "role": participant.role.name if participant.role_id else None,

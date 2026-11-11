@@ -52,6 +52,63 @@ function PaymentItems({ event }) {
   );
 }
 
+function DocumentTypes({ event }) {
+  const types = useList("document-types", { event: event.id });
+  const { create, update, remove } = useCrud("document-types", ["participant-documents"]);
+  const [form, setForm] = useState({ title: "", description: "", is_required: true });
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
+
+  return (
+    <section className="card">
+      <div className="card-head">
+        <div>
+          <h2 className="text-lg font-semibold">Документы участников</h2>
+          <p className="mt-0.5 text-sm muted">Что участник загружает в кабинете. Обязательные нужны для допуска по QR.</p>
+        </div>
+      </div>
+      <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+        {(types.data || []).map((t) => (
+          <li key={t.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">{t.title}</p>
+              {t.description ? <p className="text-xs muted">{t.description}</p> : null}
+            </div>
+            <label className="flex items-center gap-2 text-xs">
+              <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={t.is_required} onChange={(e) => update.mutate({ id: t.id, is_required: e.target.checked })} />
+              Обязателен
+            </label>
+            <IconButton
+              label={`Удалить «${t.title}»`}
+              onClick={() => window.confirm(`Удалить «${t.title}»? Загруженные участниками файлы этого типа тоже удалятся.`) && remove.mutate(t.id)}
+            >
+              <X className="h-4 w-4" />
+            </IconButton>
+          </li>
+        ))}
+      </ul>
+      <form
+        className="space-y-3 border-t border-slate-200 p-5 dark:border-slate-800"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create.mutate({ ...form, event: event.id, order: types.data?.length || 0 }, { onSuccess: () => setForm({ title: "", description: "", is_required: true }) });
+        }}
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Документ"><input className="input h-9" value={form.title} onChange={set("title")} required placeholder="Удостоверение личности" /></Field>
+          <Field label="Подсказка участнику"><input className="input h-9" value={form.description} onChange={set("description")} placeholder="Фото целиком, без бликов" /></Field>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={form.is_required} onChange={set("is_required")} /> Обязателен для допуска
+          </label>
+          <Button type="submit" variant="secondary" disabled={create.isPending}><Plus className="h-4 w-4" /> Добавить</Button>
+        </div>
+        <ErrorNote error={create.error || update.error || remove.error} />
+      </form>
+    </section>
+  );
+}
+
 function Roles({ event }) {
   const roles = useList("roles", { event: event.id });
   const { create, remove } = useCrud("roles", ["participants"]);
@@ -94,6 +151,7 @@ export default function SettingsPage() {
         </section>
         <div className="space-y-6">
           <PaymentItems event={event} />
+          <DocumentTypes event={event} />
           <Roles event={event} />
         </div>
       </div>
