@@ -1,8 +1,9 @@
 // Стена поздравлений у организатора: настройки, QR для столов, экран, модерация.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useOutletContext } from "react-router-dom";
-import { Check, Copy, EyeOff, Heart, MonitorPlay, Printer, Trash2 } from "lucide-react";
-import { API_BASE } from "../../api/client";
+import { Check, Copy, EyeOff, Heart, ImagePlus, LayoutGrid, MonitorPlay, Printer, RectangleHorizontal, Trash2 } from "lucide-react";
+import { API_BASE, api } from "../../api/client";
 import { useCrud, useList } from "../../api/hooks";
 import { fmtDate, fmtTime } from "../../format";
 import { Badge, Button, Empty, ErrorNote, Field, PageHeader, Skeleton, Tabs, cx } from "../../ui";
@@ -21,6 +22,49 @@ function useCopy() {
     setTimeout(() => setCopied(""), 2000);
   };
   return [copied, copy];
+}
+
+function BackgroundPicker({ wall }) {
+  const qc = useQueryClient();
+  const input = useRef(null);
+  const [err, setErr] = useState("");
+  const upload = useMutation({
+    mutationFn: (body) => api(`wall-settings/${wall.id}/`, { method: "PATCH", body }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["wall-settings"] }),
+  });
+  const pick = (f) => {
+    setErr("");
+    if (!f) return;
+    if (!f.type.startsWith("image/")) return setErr("Нужна картинка: JPG или PNG.");
+    if (f.size > 12 * 1024 * 1024) return setErr("Фото больше 12 МБ.");
+    const data = new FormData();
+    data.append("background", f);
+    upload.mutate(data);
+  };
+  return (
+    <div>
+      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Фон экрана</p>
+      <p className="mt-0.5 text-xs muted">Например, фото жениха и невесты. Его немного затемним, чтобы пожелания хорошо читались.</p>
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        <div className="relative h-20 w-36 overflow-hidden rounded-lg bg-[#1b1433] ring-1 ring-slate-200 dark:ring-slate-700">
+          {wall.background ? <img src={wall.background} alt="Фон экрана" className="h-full w-full object-cover" /> : (
+            <span className="absolute inset-0 bg-gradient-to-br from-rose-400/40 to-indigo-500/50" aria-hidden="true" />
+          )}
+        </div>
+        <input ref={input} type="file" accept="image/*" className="sr-only" tabIndex={-1} onChange={(e) => pick(e.target.files?.[0])} />
+        <Button variant="secondary" onClick={() => input.current?.click()} disabled={upload.isPending}>
+          <ImagePlus className="h-4 w-4" /> {upload.isPending ? "Загружаем…" : wall.background ? "Заменить фото" : "Загрузить фото"}
+        </Button>
+        {wall.background ? (
+          <Button variant="ghost" size="sm" onClick={() => upload.mutate({ clear_background: true })} disabled={upload.isPending}>
+            Убрать фото
+          </Button>
+        ) : <span className="text-xs muted">Без фото — мягкий градиент</span>}
+      </div>
+      {err ? <p className="mt-1.5 text-xs text-rose-700 dark:text-rose-400">{err}</p> : null}
+      <ErrorNote error={upload.error} />
+    </div>
+  );
 }
 
 function SettingsCard({ event, wall }) {
@@ -61,6 +105,26 @@ function SettingsCard({ event, wall }) {
               ))}
             </div>
           </fieldset>
+          <fieldset>
+            <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">Как показывать на экране</legend>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {[
+                ["BOARD", LayoutGrid, "Доска", "Все пожелания вместе, новые сразу появляются сверху."],
+                ["SLIDES", RectangleHorizontal, "По одному", "Крупно, сменяются каждые 9 секунд."],
+              ].map(([v, Icon, name, hint]) => (
+                <label key={v} className={cx("flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-indigo-500",
+                  wall.display_mode === v ? "border-indigo-500 bg-indigo-50/60 dark:border-indigo-400 dark:bg-indigo-500/10" : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50")}>
+                  <input type="radio" name="mode" className="sr-only" checked={wall.display_mode === v} onChange={() => save({ display_mode: v })} />
+                  <Icon className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                  <span>
+                    <span className="block font-medium">{name}</span>
+                    <span className="block text-xs muted">{hint}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <BackgroundPicker wall={wall} />
           <form className="flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); save({ title }); }}>
             <div className="min-w-56 flex-1">
               <Field label="Заголовок на экране" hint={`Пусто — будет «${event.title}»`}>

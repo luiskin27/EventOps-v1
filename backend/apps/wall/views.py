@@ -25,6 +25,7 @@ class WallSettingsViewSet(viewsets.ModelViewSet):
     queryset = WallSettings.objects.select_related("event")
     serializer_class = WallSettingsSerializer
     filterset_fields = ["event"]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
     http_method_names = ["get", "post", "patch"]
 
     def create(self, request, *args, **kwargs):
@@ -103,6 +104,8 @@ class PublicScreenView(APIView):
         return Response({
             "title": w.display_title,
             "event": w.event.title,
+            "display_mode": w.display_mode,
+            "background": request.build_absolute_uri(w.background.url) if w.background else None,
             "post_url": f"{settings.PUBLIC_BASE_URL}/w/{w.post_token}",
             "post_token": str(w.post_token),
             "posts": ScreenPostSerializer(posts, many=True, context={"request": request}).data,

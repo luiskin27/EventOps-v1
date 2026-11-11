@@ -6,10 +6,26 @@ MAX_PHOTO = 12 * 1024 * 1024
 
 
 class WallSettingsSerializer(serializers.ModelSerializer):
+    clear_background = serializers.BooleanField(write_only=True, required=False)
+
     class Meta:
         model = WallSettings
-        fields = ["id", "event", "is_enabled", "moderation", "title", "post_token", "screen_token"]
+        fields = [
+            "id", "event", "is_enabled", "moderation", "title", "display_mode",
+            "background", "clear_background", "post_token", "screen_token",
+        ]
         read_only_fields = ["post_token", "screen_token"]
+
+    def validate_background(self, f):
+        if f and f.size > MAX_PHOTO:
+            raise serializers.ValidationError("Фото больше 12 МБ. Выберите другое.")
+        return f
+
+    def update(self, instance, validated_data):
+        if validated_data.pop("clear_background", False):
+            instance.background.delete(save=False)
+            instance.background = ""
+        return super().update(instance, validated_data)
 
 
 class WallPostSerializer(serializers.ModelSerializer):
