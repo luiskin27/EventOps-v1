@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/", include("apps.schedule.urls")),
     path("api/", include("apps.documents.urls")),
     path("api/", include("apps.badges.urls")),
+    path("api/", include("apps.wall.urls")),
     path("api/public/badges/<uuid:token>/", PublicBadgeVerifyView.as_view()),
     path("api/public/badges/<uuid:token>/qr.png", BadgeQRView.as_view()),
     path("api/my/badge/", MyBadgeView.as_view()),

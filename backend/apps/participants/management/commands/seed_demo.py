@@ -23,6 +23,7 @@ from apps.participants.models import Participant, Role
 from apps.payments.models import PaymentItem
 from apps.schedule.models import Audience, ScheduleItem, ScheduleLink
 from apps.tasks.models import Task
+from apps.wall.models import WallPost, WallSettings
 
 User = get_user_model()
 
@@ -185,6 +186,16 @@ class Command(BaseCommand):
                 )
         for aud in (Audience.HOSTS, Audience.STAFF):
             ScheduleLink.objects.get_or_create(event=event, audience=aud)
+
+        WallSettings.objects.get_or_create(event=event, defaults={"title": "Айжан ♥ Тимур"})
+        if not event.wall_posts.exists():
+            for name, rel, text, st in (
+                ("Нургуль", "Подруга невесты", "Айжан, с первого класса вместе — и вот ты невеста! Будьте счастливы, берегите друг друга. Люблю вас!", "APPROVED"),
+                ("Бекзат", "Друг жениха", "Тимур, брат, поздравляю! Теперь ты главный по шашлыкам в семье 😄 Счастья, тепла и много детишек!", "APPROVED"),
+                ("Гульнара эже", "Тётя невесты", "Ак никеңер болсун! Пусть ваш дом будет полной чашей, а любовь — крепкой, как в первый день.", "APPROVED"),
+                ("Ольга", "Коллега", "Желаю, чтобы каждый день вашей семьи был таким же светлым, как сегодня!", "PENDING"),
+            ):
+                WallPost.objects.create(event=event, author_name=name, relation=rel, message=text, status=st)
 
         if not event.tasks.exists():
             T_ = Task.Status
