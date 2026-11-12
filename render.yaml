@@ -1,0 +1,64 @@
+# Render Blueprint: New → Blueprint → выбрать этот репозиторий.
+# Переменные с sync: false Render спросит при создании (их значения — в README, раздел «Деплой»).
+services:
+  - type: web
+    name: eventops-api
+    runtime: python
+    plan: free
+    region: singapore          # ближе всего к базе Supabase (Сеул)
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    # Миграции при каждом запуске; суперпользователь создаётся один раз (повтор — не ошибка);
+    # демо-данные — только если RUN_SEED_DEMO=1
+    startCommand: >-
+      python manage.py migrate --noinput &&
+      (python manage.py createsuperuser --noinput 2>/dev/null || true) &&
+      (if [ "$RUN_SEED_DEMO" = "1" ]; then python manage.py seed_demo; fi) &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_TIME_ZONE
+        value: Asia/Bishkek
+      # База Supabase
+      - key: DB_NAME
+        value: postgres
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # Хранилище файлов Supabase Storage
+      - key: SUPABASE_PROJECT_REF
+        sync: false
+      - key: SUPABASE_S3_REGION
+        sync: false
+      - key: SUPABASE_S3_ACCESS_KEY_ID
+        sync: false
+      - key: SUPABASE_S3_SECRET_ACCESS_KEY
+        sync: false
+      # Адрес фронтенда на Vercel (для CORS, QR-кодов и ссылок)
+      - key: FRONTEND_URL
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      # Админ и демо
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
+      - key: DEMO_STAFF_PASSWORD
+        sync: false
+      # 1 — при каждом запуске обновлять демо-данные и ставить staff1 пароль из DEMO_STAFF_PASSWORD
+      - key: RUN_SEED_DEMO
+        value: "1"

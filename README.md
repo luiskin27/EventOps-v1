@@ -88,6 +88,31 @@ frontend/src/
 - Модерация в настройках стены: «после одобрения» или «сразу».
 - Фото уменьшаются до 1600 px. **QR ведёт на `PUBLIC_BASE_URL`** из `.env`: для проверки с телефона это должен быть адрес, доступный с телефона (IP ноутбука в Wi-Fi или адрес сайта после деплоя), а не `localhost`.
 
+## Деплой (бесплатно): Render + Vercel + Supabase
+
+| Часть | Где | Файл настроек |
+|---|---|---|
+| Бэкенд Django | Render (Blueprint) | `render.yaml` |
+| Фронтенд | Vercel, Root Directory = `frontend` | `frontend/vercel.json` |
+| База | Supabase Postgres | — |
+| Файлы | Supabase Storage: `eventops-private` (приватный) и `eventops-public` (публичный) | — |
+
+Переменные Render:
+
+| Переменная | Откуда взять |
+|---|---|
+| `DB_HOST`, `DB_USER`, `DB_PASSWORD` | Supabase → Connect → Session pooler (как в локальном `.env`) |
+| `SUPABASE_PROJECT_REF` | часть адреса проекта: `https://<ref>.supabase.co` |
+| `SUPABASE_S3_REGION`, `SUPABASE_S3_ACCESS_KEY_ID`, `SUPABASE_S3_SECRET_ACCESS_KEY` | Supabase → Project Settings → Storage → S3 access keys |
+| `FRONTEND_URL`, `PUBLIC_BASE_URL` | адрес сайта на Vercel, `https://….vercel.app` |
+| `DJANGO_SUPERUSER_USERNAME/EMAIL/PASSWORD` | придумать (вход в `/admin/`) |
+| `DEMO_STAFF_PASSWORD` | придумать (пароль организатора `staff1`) |
+| `DJANGO_SECRET_KEY` | Render генерирует сам |
+
+Переменная Vercel: `VITE_API_URL` = адрес бэкенда на Render, `https://….onrender.com`.
+
+Бесплатный Render засыпает через 15 минут без посетителей; первый заход после этого ~1 минута.
+
 ## Что дальше
 
 - Хранить чеки в Supabase Storage с подписанными ссылками (сейчас `media/` открыт по прямой ссылке, только в DEBUG)

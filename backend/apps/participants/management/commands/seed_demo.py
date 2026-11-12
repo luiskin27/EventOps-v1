@@ -10,6 +10,7 @@
 Повторный запуск безопасен — ничего не дублируется.
 """
 
+import os
 from datetime import date, datetime, time, timedelta
 
 from django.contrib.auth import get_user_model
@@ -36,7 +37,8 @@ class Command(BaseCommand):
             username="staff1", defaults={"is_staff": True, "first_name": "Айгерим"}
         )
         staff.is_staff = True
-        staff.set_password("staff12345")
+        # В интернете задайте свой пароль: переменная DEMO_STAFF_PASSWORD
+        staff.set_password(os.getenv("DEMO_STAFF_PASSWORD", "staff12345"))
         staff.save()
 
         start = date.today() + timedelta(days=7)
@@ -114,7 +116,7 @@ class Command(BaseCommand):
         self.seed_wedding(staff)
 
         self.stdout.write(self.style.SUCCESS("Готово."))
-        self.stdout.write("Организатор:     staff1 / staff12345")
+        self.stdout.write("Организатор:     staff1 / " + ("(пароль из DEMO_STAFF_PASSWORD)" if os.getenv("DEMO_STAFF_PASSWORD") else "staff12345"))
         self.stdout.write("Гость свадьбы:   телефон +996 700 222 333, код AIT001")
         self.stdout.write("Участник лагеря: телефон +996 700 111 222, код ALA001")
 
