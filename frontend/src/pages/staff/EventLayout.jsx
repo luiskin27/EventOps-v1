@@ -1,5 +1,5 @@
 import { Outlet, useParams } from "react-router-dom";
-import { BadgeCheck, CalendarDays, Columns3, CreditCard, FileText, Home, Settings, UserRound, Users } from "lucide-react";
+import { BadgeCheck, CalendarDays, Columns3, CreditCard, FileText, Heart, Home, Settings, UserRound, Users } from "lucide-react";
 import { useItem, useList } from "../../api/hooks";
 import { fmtRange, isOverdueTask, peopleTerms } from "../../format";
 import AppShell, { EventSwitcher } from "../../layout/AppShell";
@@ -13,6 +13,7 @@ export default function EventLayout() {
   const tasks = useList("tasks", { event: eventId });
   const participants = useList("participants", { event: eventId });
   const pending = useList("payments", { item__event: eventId, status: "PENDING" }, { refetchInterval: 15_000 });
+  const wallPending = useList("wall-posts", { event: eventId, status: "PENDING" }, { refetchInterval: 15_000 });
   const pendingDocs = useList("participant-documents", { doc_type__event: eventId, status: "PENDING" }, { refetchInterval: 15_000 });
 
   const overdue = (tasks.data || []).filter(isOverdueTask).length;
@@ -28,6 +29,7 @@ export default function EventLayout() {
     { to: `${base}/payments`, label: "Оплаты", icon: CreditCard, count: pending.data?.length, countKind: "pending", countLabel: "На проверке:" },
     { to: `${base}/documents`, label: "Документы", icon: FileText, count: pendingDocs.data?.length, countKind: "pending", countLabel: "На проверке:" },
     { to: `${base}/badges`, label: "Бейджи", icon: BadgeCheck },
+    { to: `${base}/wall`, label: "Поздравления", icon: Heart, count: wallPending.data?.length, countKind: "pending", countLabel: "На модерации:" },
     { to: `${base}/settings`, label: "Настройки мероприятия", icon: Settings },
   ];
 

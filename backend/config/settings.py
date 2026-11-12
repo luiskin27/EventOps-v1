@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "apps.schedule",
     "apps.documents",
     "apps.badges",
+    "apps.wall",
     
 ]
 
@@ -96,6 +97,8 @@ REST_FRAMEWORK = {
     
     "DEFAULT_PERMISSION_CLASSES": ("apps.participants.access.IsStaff",),
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    # Защита публичной стены от спама: не больше 20 поздравлений в час с одного адреса
+    "DEFAULT_THROTTLE_RATES": {"wall": "20/hour"},
 }
 
 SIMPLE_JWT = {
