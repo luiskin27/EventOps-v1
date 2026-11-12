@@ -8,6 +8,8 @@ import uuid
 from django.core.files.base import ContentFile
 from django.db import models
 
+from .storage import public_storage
+
 
 def wall_photo_path(instance, filename):
     return f"wall/{instance.event_id}/{uuid.uuid4().hex}.jpg"
@@ -43,7 +45,7 @@ class WallSettings(models.Model):
     moderation = models.CharField("Модерация", max_length=10, choices=Moderation.choices, default=Moderation.BEFORE)
     title = models.CharField("Заголовок на экране", max_length=120, blank=True)
     display_mode = models.CharField("Вид экрана", max_length=10, choices=Mode.choices, default=Mode.BOARD)
-    background = models.ImageField("Фон экрана (например, фото молодых)", upload_to=wall_bg_path, blank=True)
+    background = models.ImageField("Фон экрана (например, фото молодых)", upload_to=wall_bg_path, storage=public_storage, blank=True)
     # Две разные ссылки: QR на столах (оставить поздравление) и страница для проектора
     post_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     screen_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -75,7 +77,7 @@ class WallPost(models.Model):
     author_name = models.CharField("Имя", max_length=80)
     relation = models.CharField("Кем приходится", max_length=80, blank=True)
     message = models.TextField("Поздравление", max_length=600, blank=True)
-    photo = models.ImageField("Фото", upload_to=wall_photo_path, blank=True)
+    photo = models.ImageField("Фото", upload_to=wall_photo_path, storage=public_storage, blank=True)
     status = models.CharField("Статус", max_length=10, choices=Status.choices, default=Status.PENDING)
     created_at = models.DateTimeField("Отправлено", auto_now_add=True)
 

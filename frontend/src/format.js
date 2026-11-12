@@ -99,3 +99,7 @@ export function isOverdueTask(t) {
   const end = new Date(`${t.due_date}T${t.due_time || "23:59:59"}`);
   return end < new Date();
 }
+
+// Имя файла из ссылки (у файлов в Supabase Storage после «?» идёт подпись)
+export const fileName = (url) => (url ? decodeURIComponent(url.split("?")[0].split("/").pop()) : "");
+export const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|heic)$/i.test((url || "").split("?")[0]);

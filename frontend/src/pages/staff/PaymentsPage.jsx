@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { AlertTriangle, Check, CreditCard, Download, FileImage, Search, X } from "lucide-react";
 import { useCrud, useList } from "../../api/hooks";
-import { PAYMENT_STATUS, fmtDate, fmtMoney } from "../../format";
+import { PAYMENT_STATUS, fileName, fmtDate, fmtMoney, isImageUrl } from "../../format";
 import { Badge, Button, Empty, ErrorNote, Modal, PageHeader, STATUS_TONE, Skeleton, cx } from "../../ui";
 
-const isImage = (url) => /\.(png|jpe?g|webp|gif|heic)$/i.test(url || "");
 
 function ReviewPanel({ payment, onDecided }) {
   const { update } = useCrud("payments");
@@ -39,7 +38,7 @@ function ReviewPanel({ payment, onDecided }) {
       </div>
       <div className="space-y-4 p-5">
         <figure className="rounded-lg border border-slate-200 bg-slate-100 p-4 dark:border-slate-800 dark:bg-slate-950">
-          {payment.receipt && isImage(payment.receipt) ? (
+          {payment.receipt && isImageUrl(payment.receipt) ? (
             <a href={payment.receipt} target="_blank" rel="noreferrer" className="focus-ring block rounded-md">
               <img src={payment.receipt} alt={`Чек: ${payment.participant_name}`} className="mx-auto max-h-80 rounded-md bg-white object-contain shadow-sm" />
             </a>
@@ -52,7 +51,7 @@ function ReviewPanel({ payment, onDecided }) {
           )}
           {payment.receipt ? (
             <figcaption className="mt-3 flex items-center justify-between text-xs muted">
-              <span className="truncate">{decodeURIComponent(payment.receipt.split("/").pop())}</span>
+              <span className="truncate">{fileName(payment.receipt)}</span>
               <a href={payment.receipt} download className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-white dark:hover:bg-slate-800" aria-label="Скачать оригинал">
                 <Download className="h-4 w-4" />
               </a>

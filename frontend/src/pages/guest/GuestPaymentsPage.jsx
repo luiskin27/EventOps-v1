@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { FileImage } from "lucide-react";
 import { openProtectedFile } from "../../api/hooks";
-import { PAYMENT_STATUS, fmtDate, fmtMoney } from "../../format";
+import { PAYMENT_STATUS, fileName, fmtDate, fmtMoney } from "../../format";
 import { Badge, Empty, STATUS_TONE, Skeleton } from "../../ui";
 import Dropzone from "../../ui/Dropzone";
 import { BadgeAside } from "./CabinetPage";
@@ -82,7 +82,7 @@ export default function GuestPaymentsPage() {
                       <li key={p.id} className="flex items-center gap-3 px-3 py-2.5">
                         <FileImage className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
                         <span className="min-w-0 flex-1 truncate text-sm">
-                          {p.receipt ? decodeURIComponent(p.receipt.split("/").pop()) : "Без файла"}
+                          {p.receipt ? fileName(p.receipt) : "Без файла"}
                           <span className="block text-xs muted">загружен {fmtDate(p.created_at)}</span>
                         </span>
                         <Badge tone={STATUS_TONE[p.status]}>{PAYMENT_STATUS[p.status]}</Badge>
